@@ -1,0 +1,37 @@
+This is my own library of extensions, helpers and other stuff for [Lithium](http://lithify.me)
+framework which I use across my li3 projects.
+You can use, distribute or modify them under the terms of GPL license.
+
+
+How to use
+----------
+
+Clone it from github and put it inside your `libraries` folder:
+
+	git clone git://github.com/farhadi/ali3.git
+
+Add the following line in your `config/bootstrap/libraries.php`:
+
+	Libraries::add('ali3');
+
+
+Session and Cookie classes
+--------------------------
+
+In lithium both sessions and cookies are handled through configurations for Session class and
+every time you call a Session method you need to pass a `name` option to specify which
+configuration you want to use.
+
+To simplify it I extended the original Session class in the following classes:
+
+
+### ali3\storage\Session
+
+This works just like original Session class except that if you don't pass configuration name
+it will use `default` configuration  by default.
+Also there is a bonus `flash` method which is equivalent to calling `read` followed by `delete`.
+
+
+### ali3\storage\Cookie
+
+This is the same as the above except that it uses `cookie` configuration by default.
