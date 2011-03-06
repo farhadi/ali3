@@ -48,3 +48,23 @@ line to your routes.php before connecting your routes:
 
 Now every time you call `Router::connect()` this class will be used instead of the original
 lithium Route class.
+
+
+Flash Message Helper
+--------------------
+
+Using this helper you can show flash messages in your views usually after submitting forms.
+
+Example usage:
+
+Inside controller:
+
+	//using ali3\storage\Session
+	Session::write('Auth.message', 'Invalid password.');
+
+Inside view:
+
+	echo $this->message->flash('Auth.message');
+	//output: <div class="message">Invalid password.</div>
+	echo $this->message->flash('Auth.message', array('id' => 'flash', 'class' => 'message error'));
+	//output: <div id="flash" class="message error">Invalid password.</div>
