@@ -3,8 +3,8 @@ framework which I use across my li3 projects.
 You can use, distribute or modify them under the terms of GPL license.
 
 
-How to use
-----------
+How to use?
+-----------
 
 Clone it from github and put it inside your `libraries` folder:
 
@@ -68,3 +68,23 @@ Inside view:
 	//output: <div class="message">Invalid password.</div>
 	echo $this->message->flash('Auth.message', array('id' => 'flash', 'class' => 'message error'));
 	//output: <div id="flash" class="message error">Invalid password.</div>
+
+
+Database-enabled HTTP authentication adapter
+--------------------------------------------
+
+This adapter provides basic HTTP authentication with users from database.
+
+	Auth::config(array(
+		'customer' => array(
+			'adapter' => 'Http',
+			'model' => 'Customer',
+			'fields' => array('email', 'password')
+		)
+	));
+
+This adapter is backward compatible with the original Http adapter. In other words if you specify
+`users` array in the configurations it doesn't use the database.
+
+Note that digest HTTP authentication only works when `users` array is provided and doesn't work
+with users from database.
