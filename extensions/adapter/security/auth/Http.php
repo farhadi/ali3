@@ -34,7 +34,7 @@ class Http extends \lithium\security\auth\adapter\Http {
 
 	/**
 	 * The name of the model class to query against. This can either be a model name (i.e.
-	 * `'User'`), or a fully-namespaced class reference (i.e. `'app\models\User'`). When
+	 * `'Users'`), or a fully-namespaced class reference (i.e. `'app\models\Users'`). When
 	 * authenticating users, the magic `first()` method is invoked against the model to return the
 	 * first record found when combining the conditions in the `$_scope` property with the
 	 * authentication data yielded from the `Request` object in `Form::check()`. (Note that the
@@ -99,7 +99,7 @@ class Http extends \lithium\security\auth\adapter\Http {
 	 * which model method to call, and this method will receive the authentication query. In return,
 	 * the `Form` adapter expects a `Record` object which implements the `data()` method. See the
 	 * constructor for more information on setting this property. Defaults to `'first'`, which
-	 * calls, for example, `User::first()`.
+	 * calls, for example, `Users::first()`.
 	 *
 	 * @see ali3\extensions\adapter\security\auth\Http::__construct()
 	 * @see lithium\data\entity\Record::data()
@@ -117,7 +117,7 @@ class Http extends \lithium\security\auth\adapter\Http {
 
 	public function __construct(array $config = array()) {
 		$defaults = array(
-			'model' => 'User', 'query' => 'first', 'filters' => array(), 'fields' => array(
+			'model' => 'Users', 'query' => 'first', 'filters' => array(), 'fields' => array(
 				'username', 'password'
 			), 'method' => 'basic'
 		);
