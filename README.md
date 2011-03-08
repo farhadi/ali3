@@ -88,3 +88,63 @@ This adapter is backward compatible with the original Http adapter. In other wor
 
 Note that digest HTTP authentication only works when `users` array is provided and doesn't work
 with users from database.
+
+
+Globalized Date Class
+---------------------
+
+`ali3\g11n\Date` is an extented version of php's DateTime class with integrated IntlDateFormatter
+functionality which adds support for multiple calendars and locales provided by ICU project.
+
+`timezone`, `calendar`, and `locale` options are defaulted to your application configurations
+retrieved from Environment class.
+
+	use ali3\g11n\Date;
+	
+	// If you don't pass `$date` parameter, current time will be used.
+	$date = new Date();
+
+	// You can pass a `strtotime()` compatible string as `$date` parameter
+	$date = new Date('2011-03-08');
+	$date = new Date('2011-03-08 12:24:28');
+	$date = new Date('yesterday');
+
+	// You can pass a timestamp or a DateTime object as `$date` parameter
+	$date1 = new Date(time() - 86400);
+	$date2 = new Date($date1);
+
+	// This will output a localized formatted date, depending on your application configurations.
+	echo $date->format('yyyy-MM-dd hh:mm:ss');
+
+	// You can create a Date object from a localized date string depending on your app configs.
+	$date = new Date('۱۳۸۹-۱۲-۱۷ ۱۱:۳۳');
+
+	// you can override default options by passing any or all of the options.
+	$date = new Date('۱۳۸۹-۱۲-۱۷ ۱۱:۳۳', array('locale' => 'fa', 'calendar' => 'persian'));
+
+	// You can override options when formatting, without altering object's internal options.
+	echo $date->format('yyyy-MM-dd hh:mm:ss', array(
+		'calendar' => 'gregorain',
+		'locale' => 'en',
+		'timezone' => 'UTC',
+	));
+
+	// You can alter object internal options
+	$date->locale('ar');
+	$date->calendar('islamic-civil');
+
+	// And retrieve them
+	$locale = $date->locale();
+	$calendar = $date->calendar();
+
+	// All other php DateTime methods are available
+	$time = $date->getTimestamp();
+	$date->setTimestamp($time);
+	$date->setTimezone('UTC');
+
+	// `modify` method is calendar-aware.
+	// It depends on the number of days in month/year of that specific calendar.
+	$date->modify('+1 year +2 month');
+
+For more information on date pattern that `Date::format()` accepts see this:
+http://userguide.icu-project.org/formatparse/datetime
