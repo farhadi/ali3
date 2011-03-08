@@ -148,3 +148,56 @@ retrieved from Environment class.
 
 For more information on date pattern that `Date::format()` accepts see this:
 http://userguide.icu-project.org/formatparse/datetime
+
+
+Adaptable Config Class
+----------------------
+
+It is very common that you store some of your application configurations in database or
+in configuration files (e.g. Website title, default template, default locale, etc.).
+And to avoid preformance leaks you need to cache your configurations in memory.
+
+In such situations ali3's adaptable Config comes in handy.
+
+To start using it, you need to add a config.php in your bootstrap:
+	
+	use ali3\storage\Config;
+	
+	Config::config(array(
+		'default' => array(
+			'adapter' => 'ali3\storage\config\adapter\Db',
+			'model' => 'Configs',
+			'fields' => array('name', 'value'),
+			'cache' => array(
+				'name' => 'default'
+			),
+		),
+	));
+
+If you didn't want to cache your configs just remove `'cache'` from configuration options.
+
+Now every where in your application you can use `read()`, `write()`, and
+`delete()` methods to access or modify your configs.
+
+For example:
+
+	//To read a config:
+	$siteTitle = Config::read('default', 'site_title');
+	//To write a config:
+	Config::write('default', 'site_title', $newTitle);
+	//To delete a config:
+	Config::delete('default', 'site_title');
+
+There is also shortcut methods for reading and writing configs:
+
+	//Using shortcut method to read a config named 'site_title':
+	$siteTitle = Config::siteTitle();
+	//Using shortcut method to write a config named 'site_title':
+	Config::siteTitle($newTitle);
+
+Using shortcut methods, always your first adapter configuration will be used.
+This is by design to make shortcuts shorter. Because in most of the cases just one
+adapter configuration is defined.
+
+For now only `Db` adapter is available. but you can write your own adapters if needed.
+For example you can write an adapter to read configs from .ini files.
