@@ -3,7 +3,7 @@
  * Ali3: my stuff for lithium framework.
  *
  * @copyright     Copyright 2011, Ali Farhadi (https://github.com/farhadi/ali3)
- * @license       GNU General Public License 3.0 (http://www.gnu.org/licenses/gpl.html)
+ * @license       http://opensource.org/licenses/bsd-license.php The BSD License
  */
 
 namespace ali3\extensions\helper;

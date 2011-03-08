@@ -1,6 +1,6 @@
 This is my own library of extensions, helpers and other stuff for [Lithium](http://lithify.me)
 framework which I use across my li3 projects.
-You can use, distribute or modify them under the terms of GPL license.
+You can use, distribute or modify them under the terms of BSD license.
 
 
 How to use?
