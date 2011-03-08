@@ -165,7 +165,7 @@ To start using it, you need to add a config.php in your bootstrap:
 	
 	Config::config(array(
 		'default' => array(
-			'adapter' => 'ali3\storage\config\adapter\Db',
+			'adapter' => 'Db',
 			'model' => 'Configs',
 			'fields' => array('name', 'value'),
 			'cache' => array(
