@@ -261,8 +261,7 @@ class Date extends \DateTime {
 	 * @return object The modified Date object.
 	 */
 	public function setDate($year, $month, $day) {
-		$this->set(array(
-			'date' => "$year/$month/$day " . $this->format('HH:mm:ss'),
+		$this->set("$year/$month/$day " . parent::format('H:i:s'), array(
 			'pattern' => 'yyyy/MM/dd HH:mm:ss',
 		));
 		return $this;
