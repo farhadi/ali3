@@ -12,7 +12,7 @@ use lithium\core\Libraries;
  * Overrides default adapter lookup path. So that third-party adaptables can find their adapters
  * under their own namespace/folder.
  */
-$adapter = Libraries::paths();
+$adapter = Libraries::paths('adapter');
 $adapter[] = '{:library}\{:namespace}\{:class}\adapter\{:name}';
 Libraries::paths(compact('adapter'));
 
