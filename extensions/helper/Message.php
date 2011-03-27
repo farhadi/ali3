@@ -8,6 +8,8 @@
 
 namespace ali3\extensions\helper;
 
+use lithium\core\Environment;
+use lithium\g11n\Message as G11nMessage;
 use ali3\storage\Session;
 
 /**
@@ -47,8 +49,16 @@ class Message extends \lithium\template\Helper {
 		if (!$content) {
 			return '';
 		}
-		$defaults = array('escape' => true);
+		$defaults = array('escape' => true, 'translate' => true);
 		list($scope, $options) = $this->_options($defaults, $options);
+		if ($scope['translate'] && Environment::get('locale')) {
+			if (is_array($content)) {
+				list($content, $data) = $content;
+			} else {
+				$data = array();
+			}
+			$content = G11nMessage::translate($content, $data + array('default' => $content));
+		}
 		$options += array('class' => 'message');
 		return $this->_render(__METHOD__, 'block', compact('content', 'options'), $scope);
 	}
