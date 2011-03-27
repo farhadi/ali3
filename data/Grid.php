@@ -25,7 +25,7 @@ class Grid extends \lithium\util\Collection {
 		}
 		$model = $this->_model = Libraries::locate('models', $this->_model);
 		if ($this->_request) {
-			$this->_config += static::options($this->_request, $this->_config);
+			$this->_config = static::options($this->_request, $this->_config) + $this->_config;
 		}
 		$this->_config += array('conditions' => null);
 		$options = array_intersect_key($this->_config, array(
@@ -55,7 +55,7 @@ class Grid extends \lithium\util\Collection {
 	}
 
 	public function pages() {
-		if ($total = $this->total()) {
+		if (!empty($this->_config['limit']) && $total = $this->total()) {
 			return ceil($total / $this->_config['limit']);
 		}
 	}
@@ -81,7 +81,7 @@ class Grid extends \lithium\util\Collection {
 		if (!static::_isOrderValid($options['order'], $options)) {
 			$options['order'] = null;
 		}
-		
+
 		return array_intersect_key($options, $defaults);
 	}
 

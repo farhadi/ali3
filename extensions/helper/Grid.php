@@ -50,7 +50,6 @@ class Grid extends \lithium\template\Helper {
 			$grid->pages()
 		);
 		$start = max($end - $options['count'] + 1, 1);
-		
 		$pages = array();
 		for ($i = $start; $i <= $end; $i++) {
 			$pages[] = $this->page($grid, $i);
@@ -63,28 +62,22 @@ class Grid extends \lithium\template\Helper {
 			$title = Inflector::humanize($field);
 		}
 		$order = (array)$grid->order();
-		$options = array();
-		if (current($order) == $field || (isset($order[$field]) && strtolower($order[$field]) == 'asc')) {
-			$options['class'] = 'sort asc';
-			$order = array($field => 'desc');
-		} elseif (isset($order[$field]) && strtolower($order[$field]) == 'desc') {
-			$options['class'] = 'sort desc';
-			$order = null;
+		if (isset($order[$field])) {
+			$currentOrder = strtolower($order[$field]) == 'desc' ? 'desc' : 'asc';
+			$class = 'sort ' . $currentOrder;
+		} elseif (current($order) == $field) {
+			$currentOrder = 'asc';
+			$class = 'sort asc';
 		} else {
-			$order = array($field => 'asc');
+			$currentOrder = null;
 		}
+		$order = array($field => $currentOrder == 'asc' ? 'desc' : 'asc');
 		if (!$grid->isOrderValid($order)) {
 			return $title;
 		}
 		$request = $this->_context->request();
-		if ($order) {
-			$url = $request->params + array('?' => compact('order') + $request->query);
-		} else {
-			$query = $request->query;
-			unset($query['order']);
-			$url = $request->params + ($query ? array('?' => $query) : array());
-		}
-		return $this->_context->html->link($title, $url, $options);
+		$url = $request->params + array('?' => compact('order') + $request->query);
+		return $this->_context->html->link($title, $url, compact('class'));
 	}
 }
 
