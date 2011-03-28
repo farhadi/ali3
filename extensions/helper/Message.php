@@ -47,10 +47,8 @@ class Message extends \lithium\template\Helper {
 		if (!$content) {
 			return '';
 		}
-		$defaults = array('escape' => true);
-		list($scope, $options) = $this->_options($defaults, $options);
 		$options += array('class' => 'message');
-		return $this->_render(__METHOD__, 'block', compact('content', 'options'), $scope);
+		return $this->_render(__METHOD__, 'block', compact('content', 'options'));
 	}
 }
 
