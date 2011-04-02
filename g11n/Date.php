@@ -293,7 +293,7 @@ class Date extends \DateTime {
 			parent::modify($matches[1]);
 		}
 
-		list($y, $m, $d) = explode('-', $this->format('y-M-d'));
+		list($y, $m, $d) = explode('-', $this->format('y-M-d', array('locale' => 'en')));
 		$change = strtolower($matches[2]);
 		$unit = strtolower($matches[3]);
 
