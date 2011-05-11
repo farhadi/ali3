@@ -40,7 +40,7 @@ class Db extends \lithium\core\Object {
 		$model = Libraries::locate('models', $model);
 		$conditions = array($fields['key'] => $key);
 		$config = $model::first(compact('conditions')) ?: $model::create();
-		return $config->save(array($fields['key'] => $key, $fields['value'] => 'value'));
+		return $config->save(array($fields['key'] => $key, $fields['value'] => $value));
 	}
 
 	public function delete($key) {
