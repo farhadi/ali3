@@ -65,6 +65,7 @@ class Grid extends \lithium\template\Helper {
 			'last' => true,
 			'prev' => true,
 			'next' => true,
+			'wrap' => array('class' => 'pages'),
 		);
 		$end = min(
 			max($grid->page() - intval($options['count'] / 2), 1) + $options['count'] - 1,
@@ -84,7 +85,14 @@ class Grid extends \lithium\template\Helper {
 				}
 			}
 		}
-		return implode($options['separator'], $pages);
+		$pages = implode($options['separator'], $pages);
+		if ($options['wrap'] !== false) {
+			$pages = $this->_render(__METHOD__, 'block', array(
+				'content' => $pages,
+				'options' => $options['wrap']
+			));
+		}
+		return $pages;
 	}
 
 	public function sort($grid, $field, $title = null) {
@@ -207,11 +215,8 @@ class Grid extends \lithium\template\Helper {
 		}
 		$output = $this->table(compact('header', 'body') + array('options' => $tableOptions));
 
-		if ($options['pages'] && $pages = $this->pages($grid)) {
-			$output .= $this->_render(__METHOD__, 'block', array(
-				'content' => $pages,
-				'options' => array('class' => 'pages')
-			));
+		if ($options['pages']) {
+			$pages = $this->pages($grid, is_array($options['pages']) ? $options['pages'] : array());
 		}
 
 		if ($options['wrap'] !== false) {
@@ -220,7 +225,7 @@ class Grid extends \lithium\template\Helper {
 				'options' => $options['wrap']
 			));
 		}
-		
+
 		return $output;
 	}
 
