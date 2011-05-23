@@ -371,7 +371,7 @@ class Date extends \DateTime {
 	 * @see ali3\g11n\Date::__construct()
 	 * @see http://userguide.icu-project.org/formatparse/datetime
 	 */
-	public function format($pattern, $options = null) {
+	public function format($pattern = 'yyyy/MM/dd HH:mm:ss', $options = null) {
 		if (!isset($options)) {
 			return $this->_format($pattern);
 		}
