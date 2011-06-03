@@ -215,8 +215,8 @@ class Grid extends \lithium\template\Helper {
 		}
 		$output = $this->table(compact('header', 'body') + array('options' => $tableOptions));
 
-		if ($options['pages']) {
-			$pages = $this->pages($grid, is_array($options['pages']) ? $options['pages'] : array());
+		if ($pages = $options['pages']) {
+			$output .= $this->pages($grid, is_array($pages) ? $pages : array());
 		}
 
 		if ($options['wrap'] !== false) {
