@@ -263,3 +263,16 @@ If you don't want the default table view write your own custom view:
 		echo 'Body: ' . $post['body'] . '<br />';
 	}
 	echo $this->grid->pages($posts);
+
+
+G11n Translate Command
+----------------------
+
+Using g11n translate command you can translate your messages template to other languages using
+Google Translate API.
+
+All you need is just to use the console command `li3 g11n translate`. Then it asks for your
+catalog configuration and your Google API key then shows a list of available target languages for
+you to choose.
+
+Note that there is a limitation of 100,000 characters per day to use Google Translate API.
