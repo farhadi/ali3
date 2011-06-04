@@ -92,11 +92,14 @@ class G11n extends \lithium\console\command\G11n {
 			$this->out("Translating \"{$id}\" ...");
 			$targetData[$id] = $item;
 			$vars = array();
-			$text = preg_replace_callback('/\{:.*?\}|\B\?\B/', function($matches) use (&$vars) {
+			$text = preg_replace_callback('/\{:.*?\}/', $filter = function($matches) use (&$vars) {
 				static $n = 0;
 				$vars[] = $matches[0];
 				return '_' . $n++ . '_';
 			}, $id);
+			if (!$vars) {
+				$text = preg_replace_callback('/\B\?\B/', $filter, $id);
+			}
 			$result = $service->get(
 				'/language/translate/v2',
 				'key=' . $key . '&source=en&target=' . $target . '&q=' . urlencode($text)
