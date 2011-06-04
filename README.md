@@ -100,7 +100,7 @@ functionality which adds support for multiple calendars and locales provided by 
 retrieved from Environment class.
 
 	use ali3\g11n\Date;
-	
+
 	// If you don't pass `$date` parameter, current time will be used.
 	$date = new Date();
 
@@ -160,9 +160,9 @@ And to avoid preformance leaks you need to cache your configurations in memory.
 In such situations ali3's adaptable Config comes in handy.
 
 To start using it, you need to add a config.php in your bootstrap:
-	
+
 	use ali3\storage\Config;
-	
+
 	Config::config(array(
 		'default' => array(
 			'adapter' => 'Db',
@@ -201,3 +201,65 @@ adapter configuration is defined.
 
 For now only `Db` adapter is available. but you can write your own adapters if needed.
 For example you can write an adapter to read configs from .ini files.
+
+
+Data Grid
+---------
+
+To create a data grid, first you need to create an instance of `ali3\data\Grid` inside
+your controller. Grid instances are descendants of `\lithium\util\Collection` and can be modified
+using `each()` method also can be encoded as json.
+
+For example to create a grid of your Posts model first write the controller code:
+
+	use ali3\data\Grid;
+
+	class PostsController extends \lithium\action\Controller {
+
+		public function index() {
+			$posts = new Grid(array(
+				'model' => 'Posts',
+				'request' => $this->request,
+				'conditions' => array('published' => true),
+				'fields' => array('id', 'slug', 'title', 'body'),
+			));
+			return compact('posts');
+		}
+	}
+
+Then use grid helper inside the view file:
+
+	// You can modify $posts before rendering grid.
+	$context = $this;
+	$posts->each(function($row) use ($context) {
+		if (str_len($row['body']) > 50) {
+			$link = $context->html->link(array('Posts::view', 'slug' => $row['slug']), '...');
+			$row['body'] = substr($row['body'], 0, 50) . ' ' . $link;
+		}
+		return $row;
+	});
+
+	// render method renders a grid using HTML table.
+	echo $this->grid->render($posts, array(
+		'hidden' => array('id', 'slug'),
+		'titles' => array('body' => 'Post Body'),
+		'actions' => array(
+			'view' => array(
+				'url' => function($row) {
+					return array('Posts::view', 'slug' => $row['slug']);
+				}
+			),
+			'edit',
+			'delete' => array(
+				'confirm' => 'Are you sure you want to delete post "{:title}"?',
+			)
+		);
+	));
+
+If you don't want the default table view write your own custom view:
+
+	foreach ($posts as $post) {
+		echo 'Title: ' . $post['title'] . '<br />';
+		echo 'Body: ' . $post['body'] . '<br />';
+	}
+	echo $this->grid->pages($posts);
