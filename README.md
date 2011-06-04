@@ -233,7 +233,7 @@ Then use grid helper inside the view file:
 	$context = $this;
 	$posts->each(function($row) use ($context) {
 		if (str_len($row['body']) > 50) {
-			$link = $context->html->link(array('Posts::view', 'slug' => $row['slug']), '...');
+			$link = $context->html->link('...', array('Posts::view', 'slug' => $row['slug']));
 			$row['body'] = substr($row['body'], 0, 50) . ' ' . $link;
 		}
 		return $row;
