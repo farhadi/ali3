@@ -47,6 +47,10 @@ class Message extends \lithium\template\Helper {
 		if (!$content) {
 			return '';
 		}
+		return $this->show($content, $options);
+	}
+
+	public function show($content, $options = array()) {
 		$options += array('class' => 'message');
 		return $this->_render(__METHOD__, 'block', compact('content', 'options'));
 	}
