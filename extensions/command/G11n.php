@@ -81,43 +81,58 @@ class G11n extends \lithium\console\command\G11n {
 		}
 
 		foreach ($data as $id => $item) {
-			if (
-				isset($targetData[$id]) &&
-				!empty($targetData[$id]['translated']) &&
-				$targetData[$id]['translated'] != $id
-			) {
-				continue;
+			if (!isset($targetData[$id])) {
+				$targetData[$id] = $item;
 			}
-			$this->out();
-			$this->out("Translating \"{$id}\" ...");
-			$targetData[$id] = $item;
-			$vars = array();
-			$text = preg_replace_callback('/\{:.*?\}/', $filter = function($matches) use (&$vars) {
-				static $n = 0;
-				$vars[] = $matches[0];
-				return '_' . $n++ . '_';
-			}, $id);
-			if (!$vars) {
-				$text = preg_replace_callback('/\B\?\B/', $filter, $id);
+			foreach ($item['ids'] as $type => $message) {
+				if (isset($item['ids']['plural'])) {
+					$translated = $targetData[$id]['translated'][(int)($type == 'plural')];
+				} else {
+					$translated = $targetData[$id]['translated'];
+				}
+				if ($translated && $message != $translated) {
+					continue;
+				}
+				$this->out();
+				$this->out("Translating \"{$message}\" ...");
+
+				$vars = array();
+				$filter = function($matches) use (&$vars) {
+					static $n = 0;
+					$vars[] = $matches[0];
+					return '_' . $n++ . '_';
+				};
+				$text = preg_replace_callback('/\{:.*?\}/', $filter, $message);
+				if (!$vars) {
+					$text = preg_replace_callback('/\B\?\B/', $filter, $message);
+				}
+				$result = $service->get(
+					'/language/translate/v2',
+					'key=' . $key . '&source=en&target=' . $target . '&q=' . urlencode($text)
+				);
+				$result = json_decode($result);
+				if (!$result || $result->error) {
+					$translated = $message;
+					$this->out("Failed Translating \"{$message}\".");
+				} else {
+					$translated = $result->data->translations[0]->translatedText;
+					if ($vars) {
+						$translated = preg_replace_callback(
+							'/_(\d+)_/',
+							function($matches) use (&$vars) {
+								return $vars[$matches[1]];
+							},
+							$translated
+						);
+					}
+					$this->out("Translated Text: \"{$translated}\".");
+				}
+				if (isset($item['ids']['plural'])) {
+					$targetData[$id]['translated'][(int)($type == 'plural')] = $translated;
+				} else {
+					$targetData[$id]['translated'] = $translated;
+				}
 			}
-			$result = $service->get(
-				'/language/translate/v2',
-				'key=' . $key . '&source=en&target=' . $target . '&q=' . urlencode($text)
-			);
-			$result = json_decode($result);
-			if (!$result || $result->error) {
-				$targetData[$id]['translated'] = $id;
-				$this->out("Failed Translating \"{$id}\".");
-				continue;
-			}
-			$translated = $result->data->translations[0]->translatedText;
-			if ($vars) {
-				$translated = preg_replace_callback('/_(\d+)_/', function($matches) use (&$vars) {
-					return $vars[$matches[1]];
-				}, $translated);
-			}
-			$targetData[$id]['translated'] = $translated;
-			$this->out("Translated Text: \"{$translated}\".");
 		}
 
 		$this->out();
