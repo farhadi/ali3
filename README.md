@@ -276,3 +276,56 @@ catalog configuration and your Google API key then shows a list of available tar
 you to choose.
 
 Note that there is a limitation of 100,000 characters per day to use Google Translate API.
+
+
+FireLogger log adapter
+----------------------
+
+`FireLogger` adapter allows you to log messages to [FireLogger](http://firelogger.binaryage.com/).
+
+This allows you to inspect native PHP values and objects inside the FireBug console.
+
+Because this adapter interacts directly with the `Response` object, some additional code is
+required to use it. The simplest way to achieve this is to add a filter to the `Dispatcher`. For
+example, the following can be placed in a bootstrap file:
+
+	use lithium\action\Dispatcher;
+	use lithium\analysis\Logger;
+
+	Logger::config(array(
+		'default' => array('adapter' => 'FireLogger')
+	));
+
+	Dispatcher::applyFilter('_call', function($self, $params, $chain) {
+		if (isset($params['callable']->response)) {
+			Logger::adapter('default')->bind($params['callable']->response);
+		}
+		return $chain->next($self, $params, $chain);
+	});
+
+This will cause the message and other debug settings added to the header of the
+response, where FireLogger is able to locate and print it accordingly. As this adapter
+implements the protocol specification directly, you don't need another vendor library to
+use it.
+
+Now, you can use the logger in your application code (like controllers, views and models).
+
+	class PagesController extends \lithium\action\Controller {
+		public function view() {
+			//...
+			Logger::error("Something bad happened!");
+			//...
+		}
+	}
+
+Because this adapter also has a queue implemented, it is possible to log messages even when the
+`Response` object is not yet generated. When it gets generated (and bound), all queued messages
+get flushed instantly.
+
+Because FireLogger is not a conventional logging destination like a file or a database, you can
+pass everything to the logger and inspect it further in FireLogger. In fact,
+every message that is passed will be encoded via `json_encode()`, so check out this built-in
+method for more information on how your message will be encoded.
+
+	Logger::debug(array('debug' => 'me));
+	Logger::debug(new \lithium\action\Response());
