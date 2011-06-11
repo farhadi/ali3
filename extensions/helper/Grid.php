@@ -233,10 +233,11 @@ class Grid extends \lithium\template\Helper {
 		if ($params && is_array($params[0])) {
 			$params = $params[0];
 		} elseif ($params) {
-			$params = array(
-				'content' => $params[0],
-				'options' => $params[1]
-			);
+			$content = $params[0];
+			if (isset($params[1])) {
+				$options = $params[1];
+			}
+			$params = compact('content', 'options');
 		}
 		$template = strtolower(Inflector::slug($method));
 		return $this->_render(__CLASS__ . '::' . $method, $template, $params);
