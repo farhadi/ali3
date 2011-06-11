@@ -48,8 +48,8 @@ class G11n extends \lithium\console\command\G11n {
 		));
 		$result = $service->get('/language/translate/v2/languages', 'key=' . $key . '&target=en');
 		$result = json_decode($result);
-		if (!$result || $result->error) {
-			$this->out($result->error ? 'Error: ' . $result->error->message : "An error occurred!");
+		if (!$result || isset($result->error)) {
+			$this->out($result ? 'Error: ' . $result->error->message : "An error occurred!");
 			$this->stop(1);
 		}
 		$langs = array();
@@ -111,7 +111,7 @@ class G11n extends \lithium\console\command\G11n {
 					'key=' . $key . '&source=en&target=' . $target . '&q=' . urlencode($text)
 				);
 				$result = json_decode($result);
-				if (!$result || $result->error) {
+				if (!$result || isset($result->error)) {
 					$translated = $message;
 					$this->out("Failed Translating \"{$message}\".");
 				} else {
@@ -147,7 +147,9 @@ class G11n extends \lithium\console\command\G11n {
 			$this->stop(1);
 		}
 
-		mkdir($configs[$name]['path'] . "/{$target}/LC_MESSAGES", 0755, true);
+		if (!file_exists($configs[$name]['path'] . "/{$target}/LC_MESSAGES")) {
+			mkdir($configs[$name]['path'] . "/{$target}/LC_MESSAGES", 0755, true);
+		}
 		$scope = $configs[$name]['scope'];
 		Catalog::write($name, 'message', $target, $targetData, compact('scope'));
 		unlink($configs[$name]['path'] . "/{$target}/LC_MESSAGES/" . ($scope ?: 'default') . '.mo');
