@@ -143,7 +143,8 @@ class FireLogger extends \lithium\core\Object {
 		return function($self, $params) use (&$_self) {
 			$priority = $params['priority'];
 			$message = $params['message'];
-			$message = $_self->invokeMethod('_format', array($priority, $message));
+			$options = $params['options'];
+			$message = $_self->invokeMethod('_format', array($priority, $message, $options));
 			$_self->invokeMethod('_write', array($message));
 			return true;
 		};
@@ -171,7 +172,7 @@ class FireLogger extends \lithium\core\Object {
 	 * @param string $message Contains the actual message to store.
 	 * @return array Returns the array of headers representing the priority and message.
 	 */
-	protected function _format($type, $message) {
+	protected function _format($type, $message, $options) {
 		$time = microtime(true);
 		$item = array(
 			'args' => array($message),
@@ -197,6 +198,9 @@ class FireLogger extends \lithium\core\Object {
 			$item['code'] = $message->getCode();
 			$item['pathname'] = $message->getFile();
 			$item['lineno'] = $message->getLine();
+		} elseif (isset($options['line'], $options['file'])) {
+			$item['pathname'] = $options['file'];
+			$item['lineno'] = $options['line'];
 		} else {
 			$trace = debug_backtrace();
 			extract($this->_extractFileLine($trace));
