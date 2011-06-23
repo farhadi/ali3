@@ -173,6 +173,7 @@ class FireLogger extends \lithium\core\Object {
 	 * @return array Returns the array of headers representing the priority and message.
 	 */
 	protected function _format($type, $message, $options) {
+		$options += $this->_config;
 		$time = microtime(true);
 		$item = array(
 			'args' => array($message),
@@ -186,7 +187,7 @@ class FireLogger extends \lithium\core\Object {
 		);
 		if ($message instanceof Exception) {
 			$trace = $message->getTrace();
-			$ti = $this->_extractTrace($trace);
+			$ti = static::_extractTrace($trace);
 			$item['exc_info'] = array(
 				$message->getMessage(),
 				$message->getFile(),
@@ -203,11 +204,11 @@ class FireLogger extends \lithium\core\Object {
 			$item['lineno'] = $options['line'];
 		} else {
 			$trace = debug_backtrace();
-			extract($this->_extractFileLine($trace));
+			extract(static::_extractFileLine($trace));
 			$item['pathname'] = $file;
 			$item['lineno'] = $line;
 		}
-		$logs = array($this->_pickle($item));
+		$logs = array(static::_pickle($item, $options));
 		$id = dechex(mt_rand(0, 0xFFFF)) . dechex(mt_rand(0, 0xFFFF));
 		$json = json_encode(array('logs' => $logs));
 		$res = str_split(base64_encode($json), 76); // RFC 2045
@@ -217,7 +218,7 @@ class FireLogger extends \lithium\core\Object {
 		return $headers;
 	}
 
-	protected function _pickle($var, $level = 0) {
+	protected static function _pickle($var, $options, $level = 0) {
 		if (is_bool($var) || is_null($var) || is_int($var) || is_float($var)) {
 			return $var;
 		}
@@ -225,7 +226,7 @@ class FireLogger extends \lithium\core\Object {
 			return @iconv(
 				'UTF-16',
 				'UTF-8//IGNORE',
-				iconv($this->_config['encoding'], 'UTF-16//IGNORE', $var)
+				iconv($options['encoding'], 'UTF-16//IGNORE', $var)
 			); // intentionally @
 		}
 		if (is_array($var)) {
@@ -236,12 +237,13 @@ class FireLogger extends \lithium\core\Object {
 			if (isset($var[$marker])) {
 				return '*RECURSION*';
 			}
-			if ($level < $this->_config['maxDepth'] || !$this->_config['maxDepth']) {
+			if ($level < $options['maxDepth'] || !$options['maxDepth']) {
 				$var[$marker] = TRUE;
 				$res = array();
 				foreach ($var as $k => &$v) {
 					if ($k !== $marker) {
-						$res[$this->_pickle($k)] = $this->_pickle($v, $level + 1);
+						$res[static::_pickle($k, $options)] =
+							static::_pickle($v, $options, $level + 1);
 					}
 				}
 				unset($var[$marker]);
@@ -257,14 +259,14 @@ class FireLogger extends \lithium\core\Object {
 			if (in_array($var, $list, TRUE)) {
 				return '*RECURSION*';
 			}
-			if ($level < $this->_config['maxDepth'] || !$this->_config['maxDepth']) {
+			if ($level < $options['maxDepth'] || !$options['maxDepth']) {
 				$list[] = $var;
 				$res = array();
 				foreach ($arr as $k => &$v) {
 					if ($k[0] === "\x00") {
 						$k = substr($k, strrpos($k, "\x00") + 1);
 					}
-					$res[$this->_pickle($k)] = $this->_pickle($v, $level + 1);
+					$res[static::_pickle($k, $options)] = static::_pickle($v, $options, $level + 1);
 				}
 				array_pop($list);
 				return $res;
@@ -277,7 +279,7 @@ class FireLogger extends \lithium\core\Object {
 		return '*unknown type*';
 	}
 
-	protected function _extractFileLine($trace) {
+	protected static function _extractFileLine($trace) {
 		$trace = array_slice($trace, 6);
 		if (count($trace) == 0) {
 			$file = '?';
@@ -289,7 +291,7 @@ class FireLogger extends \lithium\core\Object {
 		return compact('file', 'line');
 	}
 
-	protected function _extractTrace($trace) {
+	protected static function _extractTrace($trace) {
 		$t = array();
 		$f = array();
 		foreach ($trace as $frame) {
