@@ -110,33 +110,33 @@ class Config extends \lithium\core\Adaptable {
 		}
 	}
 
-	public static function read($name, $key) {
+	public static function read($name, $key, array $options = array()) {
 		$settings = static::_config($name);
-		$params = compact('name', 'key');
+		$params = compact('name', 'key', 'options');
 		$filters = $settings['filters'][__FUNCTION__];
 		return static::_filter(__FUNCTION__, $params, function($self, $params) {
 			extract($params);
-			return $self::adapter($name)->read($key);
+			return $self::adapter($name)->read($key, $options);
 		}, $filters);
 	}
 
-	public static function write($name, $key, $value) {
+	public static function write($name, $key, $value, array $options = array()) {
 		$settings = static::_config($name);
-		$params = compact('name', 'key', 'value');
+		$params = compact('name', 'key', 'value', 'options');
 		$filters = $settings['filters'][__FUNCTION__];
 		return static::_filter(__FUNCTION__, $params, function($self, $params) {
 			extract($params);
-			return $self::adapter($name)->write($key, $value);
+			return $self::adapter($name)->write($key, $value, $options);
 		}, $filters);
 	}
 
-	public static function delete($name, $key) {
+	public static function delete($name, $key, array $options = array()) {
 		$settings = static::_config($name);
-		$params = compact('name', 'key');
+		$params = compact('name', 'key', 'options');
 		$filters = $settings['filters'][__FUNCTION__];
 		return static::_filter(__FUNCTION__, $params, function($self, $params) {
 			extract($params);
-			return $self::adapter($name)->delete($key);
+			return $self::adapter($name)->delete($key, $options);
 		}, $filters);
 	}
 }

@@ -21,7 +21,7 @@ class Db extends \lithium\core\Object {
 		$this->_config['fields'] = array_combine(array('key', 'value'), $this->_config['fields']);
 	}
 
-	public function read($key) {
+	public function read($key, array $options = array()) {
 		$model = $this->_config['model'];
 		$fields = $this->_config['fields'];
 		$model = Libraries::locate('models', $model);
@@ -34,7 +34,7 @@ class Db extends \lithium\core\Object {
 		}
 	}
 
-	public function write($key, $value) {
+	public function write($key, $value, array $options = array()) {
 		$model = $this->_config['model'];
 		$fields = $this->_config['fields'];
 		$model = Libraries::locate('models', $model);
@@ -43,7 +43,7 @@ class Db extends \lithium\core\Object {
 		return $config->save(array($fields['key'] => $key, $fields['value'] => $value));
 	}
 
-	public function delete($key) {
+	public function delete($key, array $options = array()) {
 		$model = $this->_config['model'];
 		$fields = $this->_config['fields'];
 		$model = Libraries::locate('models', $model);
