@@ -24,104 +24,70 @@ use lithium\core\Libraries;
  * 	));
  * }}}
  *
+ * This is actually a merger between `Form` and `Http` adapters. So all the features of `Form`
+ * adpater like `filters` and `validators` are also available in this adapter.
+ *
  * This adapter is backward compatible with the original Http adapter. In other words if you specify
  * `users` array in the configurations it doesn't use the database.
  *
  * Note that digest HTTP authentication only works when `users` array is provided and doesn't work
  * with users from database.
  */
-class Http extends \lithium\security\auth\adapter\Http {
+class Http extends \lithium\security\auth\adapter\Form {
 
 	/**
-	 * The name of the model class to query against. This can either be a model name (i.e.
-	 * `'Users'`), or a fully-namespaced class reference (i.e. `'app\models\Users'`). When
-	 * authenticating users, the magic `first()` method is invoked against the model to return the
-	 * first record found when combining the conditions in the `$_scope` property with the
-	 * authentication data yielded from the `Request` object in `Form::check()`. (Note that the
-	 * model method called is configurable using the `$_query` property).
+	 * Setup default configuration options.
 	 *
-	 * @see ali3\extensions\adapter\security\auth\Http::$_query
-	 * @var string
+	 * @param array $config
+	 *        - `method`: default: `digest` options: `basic|digest`
+	 *        - `realm`: default to app name.
+	 *        - `users`: the users to permit. key => value pair of username => password
+	 *        - `'model'` _string_: The name of the model class to use. See the `$_model`
+	 *          property for details.
+	 *        - `'fields'` _array_: The model fields to query against when taking input from
+	 *          the request data. See the `$_fields` property for details.
+	 *        - `'scope'` _array_: Any additional conditions used to constrain the
+	 *          authentication query. For example, if active accounts in an application have
+	 *          an `active` field which must be set to `true`, you can specify
+	 *          `'scope' => array('active' => true)`. See the `$_scope` property for more details.
+	 *        - `'filters'` _array_: Named callbacks to apply to request data before the user
+	 *          lookup query is generated. See the `$_filters` property for more details.
+	 *        - `'validators'` _array_: Named callbacks to apply to fields in request data and
+	 *          corresponding fields in database data in order to do programmatic
+	 *          authentication checks after the query has occurred. See the `$_validators`
+	 *          property for more details.
+	 *        - `'query'` _string_: Determines the model method to invoke for authentication
+	 *          checks. See the `$_query` property for more details.
 	 */
-	protected $_model = '';
-
-	/**
-	 * The list of fields to extract from the `Request` object and use when querying the database.
-	 * This can either be a simple array of field names, or a set of key/value pairs, which map
-	 * the field names in the request to
-	 *
-	 * @var array
-	 */
-	protected $_fields = array();
-
-	/**
-	 * Additional data to apply to the model query conditions when looking up users, i.e.
-	 * `array('active' => true)` to disallow authenticating against inactive user accounts.
-	 *
-	 * @var array
-	 */
-	protected $_scope = array();
-
-	/**
-	 * Callback filters to apply to request data before using it in the authentication query. Each
-	 * key in the array must match a request field specified in the `$_fields` property, and each
-	 * value must either be a reference to a function or method name, or a closure. For example, to
-	 * automatically hash passwords, the `Form` adapter provides the following default
-	 * configuration, i.e.: `array('password' => array('\lithium\util\String', 'hash'))`.
-	 *
-	 * Optionally, you can specify a callback with no key, which will receive (and can modify) the
-	 * entire credentials array before the query is executed, as in the following example:
-	 * {{{
-	 * 	Auth::config(array(
-	 * 		'members' => array(
-	 * 			'adapter' => 'Http',
-	 * 			'model' => 'Member',
-	 * 			'fields' => array('email', 'password'),
-	 * 			'filters' => array(function($data) {
-	 * 				// If the user is outside the company, then their account must have the
-	 * 				// 'private' field set to true in order to log in:
-	 * 				if (!preg_match('/@mycompany\.com$/', $data['email'])) {
-	 * 					$data['private'] = true;
-	 * 				}
-	 * 				return $data;
-	 * 			})
-	 * 		)
-	 * 	));
-	 * }}}
-	 *
-	 * @see ali3\extensions\adapter\security\auth\Http::$_fields
-	 * @var array
-	 */
-	protected $_filters = array('password' => array('\lithium\util\String', 'hash'));
-
-	/**
-	 * If you require custom model logic in your authentication query, use this setting to specify
-	 * which model method to call, and this method will receive the authentication query. In return,
-	 * the `Form` adapter expects a `Record` object which implements the `data()` method. See the
-	 * constructor for more information on setting this property. Defaults to `'first'`, which
-	 * calls, for example, `Users::first()`.
-	 *
-	 * @see ali3\extensions\adapter\security\auth\Http::__construct()
-	 * @see lithium\data\entity\Record::data()
-	 * @var string
-	 */
-	protected $_query = '';
-
-	/**
-	 * List of configuration properties to automatically assign to the properties of the adapter
-	 * when the class is constructed.
-	 *
-	 * @var array
-	 */
-	protected $_autoConfig = array('model', 'fields', 'scope', 'filters' => 'merge', 'query');
-
 	public function __construct(array $config = array()) {
-		$defaults = array(
-			'model' => 'Users', 'query' => 'first', 'filters' => array(), 'fields' => array(
-				'username', 'password'
-			), 'method' => 'basic'
-		);
+		$defaults = array('method' => 'basic', 'realm' => basename(LITHIUM_APP_PATH));
 		parent::__construct($config + $defaults);
+	}
+
+	protected function _init() {
+		$this->_config['fields'] = array_combine(
+			array('username', 'password'),
+			$this->_config['fields']
+		);
+
+		parent::_init();
+	}
+
+	/**
+	 * Called by the `Auth` class to run an authentication check against the HTTP data using the
+	 * credientials in a data container (a `Request` object), and returns an array of user
+	 * information on success, or `false` on failure.
+	 *
+	 * @param object $request A env container which wraps the authentication credentials used
+	 *               by HTTP (usually a `Request` object). See the documentation for this
+	 *               class for further details.
+	 * @param array $options Additional configuration options. Not currently implemented in this
+	 *              adapter.
+	 * @return array Returns an array containing user information on success, or `false` on failure.
+	 */
+	public function check($request, array $options = array()) {
+		$method = "_{$this->_config['method']}";
+		return $this->{$method}($request, $options);
 	}
 
 	/**
@@ -130,59 +96,76 @@ class Http extends \lithium\security\auth\adapter\Http {
 	 * @param string $request a `\lithium\action\Request` object
 	 * @return void
 	 */
-	protected function _basic($request) {
+	protected function _basic($request, $options) {
 		$users = $this->_config['users'];
 		$username = $request->env('PHP_AUTH_USER');
 		$password = $request->env('PHP_AUTH_PW');
+
 		if ($users) {
 			if (isset($users[$username]) && $users[$username] === $password) {
 				$user = compact('username', 'password');
 			} else {
-				$user = null;
+				$user = false;
 			}
 		} else {
-			$model = $this->_model;
-			$query = $this->_query;
-			$conditions = $this->_scope + $this->_filters(compact('username', 'password'));
-			$user = $model::$query(compact('conditions'));
-			if ($user) {
-				$user = $user->data();
-			}
+			$data = compact('username', 'password');
+			$user = parent::check((object) compact('data'), $options);
 		}
 		if (!$user) {
 			$this->_writeHeader("WWW-Authenticate: Basic realm=\"{$this->_config['realm']}\"");
-			return;
+			return false;
 		}
+
 		return $user;
 	}
 
-	protected function _init() {
-		parent::_init();
+	/**
+	 * Handler for HTTP Digest Authentication
+	 *
+	 * @param string $request a `\lithium\action\Request` object
+	 * @return void
+	 */
+	protected function _digest($request, $options) {
+		$realm = $this->_config['realm'];
+		$data = array(
+			'username' => null, 'nonce' => null, 'nc' => null,
+			'cnonce' => null, 'qop' => null, 'uri' => null,
+			'response' => null
+		);
 
-		if (isset($this->_fields[0])) {
-			$this->_fields = array_combine(array('username', 'password'), $this->_fields);
+		$result = array_map(function ($string) use (&$data) {
+			$parts = explode('=', trim($string), 2) + array('', '');
+			$data[$parts[0]] = trim($parts[1], '"');
+		}, explode(',', $request->env('PHP_AUTH_DIGEST')));
+
+		$users = $this->_config['users'];
+		$password = !empty($users[$data['username']]) ? $users[$data['username']] : null;
+
+		$user = md5("{$data['username']}:{$realm}:{$password}");
+		$nonce = "{$data['nonce']}:{$data['nc']}:{$data['cnonce']}:{$data['qop']}";
+		$req = md5($request->env('REQUEST_METHOD') . ':' . $data['uri']);
+		$hash = md5("{$user}:{$nonce}:{$req}");
+
+		if (!$data['username'] || $hash !== $data['response']) {
+			$nonce = uniqid();
+			$opaque = md5($realm);
+
+			$message = "WWW-Authenticate: Digest realm=\"{$realm}\",qop=\"auth\",";
+			$message .= "nonce=\"{$nonce}\",opaque=\"{$opaque}\"";
+			$this->_writeHeader($message);
+			return;
 		}
-		if (!$this->_config['users']) {
-			$this->_model = Libraries::locate('models', $this->_model);
-		}
+		return array('username' => $data['username'], 'password' => $password);
 	}
 
 	/**
-	 * Calls each registered callback, by field name.
+	 * Helper method for writing headers. Mainly used to override the output while testing.
 	 *
-	 * @param string $data Keyed form data.
-	 * @return mixed Callback result.
+	 * @param string $string the string the send as a header
+	 * @return void
 	 */
-	protected function _filters($data) {
-		$result = array();
-
-		foreach ($this->_fields as $key => $field) {
-			$result[$field] = isset($data[$key]) ? $data[$key] : null;
-			if (isset($this->_filters[$key])) {
-				$result[$field] = call_user_func($this->_filters[$key], $result[$field]);
-			}
-		}
-		return isset($this->_filters[0]) ? call_user_func($this->_filters[0], $result) : $result;
+	protected function _writeHeader($string) {
+		header($string, true);
 	}
 }
 
