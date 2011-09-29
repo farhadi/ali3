@@ -37,19 +37,6 @@ Also there is a bonus `flash` method which is equivalent to calling `read` follo
 This is the same as the above except that it uses `cookie` configuration by default.
 
 
-Localized route extension
--------------------------
-
-Using this extension all your urls will be prefixed by locale (e.g. /en/controller/action).
-To use it first make sure g11n.php is loaded in your bootstrap.php and then add the following
-line to your routes.php before connecting your routes:
-
-	Router::config(array('classes' => array('route' => 'ali3\extensions\route\Localized')));
-
-Now every time you call `Router::connect()` this class will be used instead of the original
-lithium Route class.
-
-
 Flash Message Helper
 --------------------
 
