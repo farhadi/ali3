@@ -83,8 +83,11 @@ This adapter provides basic HTTP authentication with users from database.
 		)
 	));
 
-This adapter is backward compatible with the original Http adapter. In other words if you specify
-`users` array in the configurations it doesn't use the database.
+This is actually a merger between `Form` and `Http` adapters. So all the features of `Form` adpater
+like `filters` and `validators` are also available in this adapter.
+
+This adapter is backward compatible with the original Http adapter. In other words it doesn't use
+the database if you specify `users` array in the configurations.
 
 Note that digest HTTP authentication only works when `users` array is provided and doesn't work
 with users from database.
@@ -327,5 +330,5 @@ pass everything to the logger and inspect it further in FireLogger. In fact,
 every message that is passed will be encoded via `json_encode()`, so check out this built-in
 method for more information on how your message will be encoded.
 
-	Logger::debug(array('debug' => 'me));
+	Logger::debug(array('debug' => 'me'));
 	Logger::debug(new \lithium\action\Response());
