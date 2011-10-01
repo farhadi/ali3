@@ -8,8 +8,6 @@
 
 namespace ali3\extensions\adapter\security\auth;
 
-use lithium\core\Libraries;
-
 /**
  * Database-enabled HTTP authentication adapter.
  * 
