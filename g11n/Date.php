@@ -113,10 +113,11 @@ class Date extends \DateTime {
 		if (is_a($options['timezone'], '\DateTimeZone')) {
 			$options['timezone'] = $options['timezone']->getName();
 		}
+		$calendarType = $options['calendar'] === 'gregorian' ? 'GREGORIAN' : 'TRADITIONAL';
 		return new IntlDateFormatter(
 			$options['locale'] . '@calendar=' . $options['calendar'],
 			IntlDateFormatter::FULL, IntlDateFormatter::FULL, $options['timezone'],
-			IntlDateFormatter::GREGORIAN, $options['pattern']
+			constant("IntlDateFormatter::{$calendarType}"), $options['pattern']
 		);
 	}
 
