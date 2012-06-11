@@ -181,7 +181,7 @@ class Grid extends \lithium\template\Helper {
 			$header .= $this->tableHeader('#', array('class' => 'row'));
 		}
 		foreach (array_keys($grid->first()) as $field) {
-			if (in_array($field, $options['hidden'])) {
+			if ($field == 'options' || in_array($field, $options['hidden'])) {
 				continue;
 			}
 			if (isset($options['titles'][$field])) {
@@ -200,8 +200,11 @@ class Grid extends \lithium\template\Helper {
 		$header = $this->tableRow($header);
 		$number = $grid->limit() * ($grid->page() - 1);
 		foreach ($grid as $row) {
-			$rowContent = '';
 			$number++;
+			$rowOptions = isset($row['options']) ? $row['options'] : array();
+			$rowOptions += array('class' => $number % 2 ? 'odd' : 'even');
+			unset($row['options']);
+			$rowContent = '';
 			if ($options['#']) {
 				$rowContent .= $this->tableCell($number, array('class' => 'row'));
 			}
@@ -211,7 +214,7 @@ class Grid extends \lithium\template\Helper {
 				}
 				$rowContent .= $this->tableCell($cell, array('class' => $field));
 			}
-			$body .= $this->tableRow($rowContent, array('class' => $number % 2 ? 'odd' : 'even'));
+			$body .= $this->tableRow($rowContent, $rowOptions);
 		}
 		$output = $this->table(compact('header', 'body') + array('options' => $tableOptions));
 
