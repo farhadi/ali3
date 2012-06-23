@@ -67,11 +67,8 @@ class Grid extends \lithium\template\Helper {
 			'next' => true,
 			'wrap' => array('class' => 'pages'),
 		);
-		$end = min(
-			max($grid->page() - intval($options['count'] / 2), 1) + $options['count'] - 1,
-			$grid->pages()
-		);
-		$start = max($end - $options['count'] + 1, 1);
+		$start = max($grid->page() - intval($options['count'] / 2), 1); 
+		$end = min($start + $options['count'] - 1, $grid->pages());
 		$pages = array();
 		for ($i = $start; $i <= $end; $i++) {
 			$pages[] = $this->page($grid, $i);
