@@ -20,38 +20,42 @@ class Grid extends \lithium\template\Helper {
 	 */
 	protected $_strings = array(
 		'block'        => '<div{:options}>{:content}</div>',
+		'link'         => '<a href="{:url}"{:options}>{:title}</a>',
+		'list'         => '<ul{:options}>{:content}</ul>',
+		'list-item'    => '<li{:options}>{:content}</li>',
 		'table'        => '<table{:options}><thead>{:header}</thead><tbody>{:body}</tbody></table>',
 		'table-header' => '<th{:options}>{:content}</th>',
 		'table-cell'   => '<td{:options}>{:content}</td>',
 		'table-row'    => '<tr{:options}>{:content}</tr>',
 	);
 
-	public function page($grid, $page, $text = null) {
+	public function page($grid, $page, $title = null, $options = array()) {
 		$request = $this->_context->request();
 		$url = $request->params + array('?' => array('page' => $page) + $request->query);
-		if ($grid->page() == $page) {
-			return $this->_context->html->link($text ?: $page, $url, array('class' => 'current'));
+		$title = $title ?: $page;
+		if ($page == $grid->page()) {
+			$options += array('class' => 'active');
 		}
-		return $this->_context->html->link($text ?: $page, $url);
+		return $this->listItem($this->link(compact('url', 'title')), $options);
 	}
 
-	public function first($grid, $text = '« first') {
-		return $grid->page() == 1 ? '' : $this->page($grid, 1, $text);
+	public function first($grid, $title = null, $options = array()) {
+		return $grid->page() == 1 ? '' : $this->page($grid, 1, $title, $options);
 	}
 
-	public function last($grid, $text = 'last »') {
+	public function last($grid, $title = null, $options = array()) {
 		$last = $grid->pages();
-		return $grid->page() == $last ? '' : $this->page($grid, $last, $text);
+		return $grid->page() == $last ? '' : $this->page($grid, $last, $title, $options);
 	}
 
-	public function prev($grid, $text = '« previous') {
+	public function prev($grid, $title = null, $options = array()) {
 		$page = $grid->page();
-		return $page == 1 ? '' : $this->page($grid, $page - 1, $text);
+		return $page == 1 ? '' : $this->page($grid, $page - 1, $title, $options);
 	}
 
-	public function next($grid, $text = 'next »') {
+	public function next($grid, $title = null, $options = array()) {
 		$page = $grid->page();
-		return $page == $grid->pages() ? '' : $this->page($grid, $page + 1, $text);
+		return $page == $grid->pages() ? '' : $this->page($grid, $page + 1, $title, $options);
 	}
 
 	public function pages($grid, $options = array()) {
@@ -59,13 +63,12 @@ class Grid extends \lithium\template\Helper {
 			return '';
 		}
 		$options += array(
-			'separator' => '',
 			'count' => 9,
-			'first' => true,
-			'last' => true,
-			'prev' => true,
-			'next' => true,
-			'wrap' => array('class' => 'pages'),
+			'first' => '«',
+			'last' => '»',
+			'prev' => false,
+			'next' => false,
+			'wrap' => array('class' => 'pagination'),
 		);
 		$start = max($grid->page() - intval($options['count'] / 2), 1); 
 		$end = min($start + $options['count'] - 1, $grid->pages());
@@ -76,18 +79,15 @@ class Grid extends \lithium\template\Helper {
 		foreach (array('prev', 'first', 'next', 'last') as $key => $method) {
 			if ($options[$method]) {
 				if ($key < 2) {
-					array_unshift($pages, $this->{$method}($grid));
+					array_unshift($pages, $this->{$method}($grid, $options[$method]));
 				} else {
-					$pages[] = $this->{$method}($grid);
+					$pages[] = $this->{$method}($grid, $options[$method]);
 				}
 			}
 		}
-		$pages = implode($options['separator'], $pages);
+		$pages = $this->list(implode('', $pages));
 		if ($options['wrap'] !== false) {
-			$pages = $this->_render(__METHOD__, 'block', array(
-				'content' => $pages,
-				'options' => $options['wrap']
-			));
+			$pages = $this->block($pages, $options['wrap']);
 		}
 		return $pages;
 	}
@@ -112,7 +112,8 @@ class Grid extends \lithium\template\Helper {
 		}
 		$request = $this->_context->request();
 		$url = $request->params + array('?' => compact('order') + $request->query);
-		return $this->_context->html->link($title, $url, compact('class'));
+		$options = compact('class');
+		return $this->link(compact('title', 'url', 'options'));
 	}
 
 	public function render($grid, $options = array()) {
@@ -126,14 +127,13 @@ class Grid extends \lithium\template\Helper {
 			'#' => true,
 			'hidden' => array(),
 			'titles' => array(),
-			'wrap' => array('class' => 'grid'),
 		);
 		list($options, $tableOptions) = $this->_options($defaults, $options);
 		if ($options['actions']) {
 			$actions = $options['actions'];
 			$titles = $options['titles'];
-			$context = $this->_context;
-			$grid->each(function($row) use ($context, $titles, $actions) {
+			$self = $this;
+			$grid->each(function($row) use ($self, $titles, $actions) {
 				foreach ($actions as $action => $options) {
 					if (is_int($action)) {
 						$action = $options;
@@ -145,7 +145,7 @@ class Grid extends \lithium\template\Helper {
 						$options['onclick'] = "return confirm('$confirm');";
 						unset($options['confirm']);
 					}
-					$options += array('class' => 'action ' . $action);
+					$options += array('class' => $action);
 					if (isset($options['url'])) {
 						$url = $options['url']($row);
 						if (!$url) {
@@ -166,16 +166,18 @@ class Grid extends \lithium\template\Helper {
 					} else {
 						$title = Inflector::humanize($action);
 					}
-					$row['actions'][] = $context->html->link($title, $url, $options);
+					$link = $self->link(compact('title', 'url'));
+					$row['actions'][] = $self->listItem($link, $options);
 				}
-				$row['actions'] = implode(' ', $row['actions']);
+				$row['actions'] = implode('', $row['actions']);
+				$row['actions'] = $self->list($row['actions'], array('class' => 'actions'));
 				return $row;
 			});
 			$options['titles'] += array('actions' => '');
 		}
 		$header = $body = '';
 		if ($options['#']) {
-			$header .= $this->tableHeader('#', array('class' => 'row'));
+			$header .= $this->tableHeader('#');
 		}
 		foreach (array_keys($grid->first()) as $field) {
 			if ($field == 'options' || in_array($field, $options['hidden'])) {
@@ -192,24 +194,23 @@ class Grid extends \lithium\template\Helper {
 			) {
 				$title = $this->sort($grid, $field, $title);
 			}
-			$header .= $this->tableHeader($title, array('class' => $field));
+			$header .= $this->tableHeader($title);
 		}
 		$header = $this->tableRow($header);
 		$number = $grid->limit() * ($grid->page() - 1);
 		foreach ($grid as $row) {
 			$number++;
 			$rowOptions = isset($row['options']) ? $row['options'] : array();
-			$rowOptions += array('class' => $number % 2 ? 'odd' : 'even');
 			unset($row['options']);
 			$rowContent = '';
 			if ($options['#']) {
-				$rowContent .= $this->tableCell($number, array('class' => 'row'));
+				$rowContent .= $this->tableCell($number);
 			}
 			foreach ($row as $field => $cell) {
 				if (in_array($field, $options['hidden'])) {
 					continue;
 				}
-				$rowContent .= $this->tableCell($cell, array('class' => $field));
+				$rowContent .= $this->tableCell($cell);
 			}
 			$body .= $this->tableRow($rowContent, $rowOptions);
 		}
@@ -219,25 +220,15 @@ class Grid extends \lithium\template\Helper {
 			$output .= $this->pages($grid, is_array($pages) ? $pages : array());
 		}
 
-		if ($options['wrap'] !== false) {
-			$output = $this->_render(__METHOD__, 'block', array(
-				'content' => $output,
-				'options' => $options['wrap']
-			));
-		}
-
 		return $output;
 	}
 
 	function __call($method, $params = array()) {
 		if ($params && is_array($params[0])) {
-			$params = $params[0];
+			$params = $params[0] + array('options' => array());
 		} elseif ($params) {
-			$content = $params[0];
-			if (isset($params[1])) {
-				$options = $params[1];
-			}
-			$params = compact('content', 'options');
+			$params += array(null, array());
+			$params = array('content' => $params[0], 'options' => $params[1]);
 		}
 		$template = strtolower(Inflector::slug($method));
 		return $this->_render(__CLASS__ . '::' . $method, $template, $params);
