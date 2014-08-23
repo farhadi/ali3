@@ -357,7 +357,7 @@ class Date extends \DateTime {
 		return $this->_formatter(array(
 			// ICU timezones DST data are not as accurate as PHP.
 			// So we get timezone difference in hours from php and pass it to ICU.
-			'timezone' => 'GMT' . parent::format('O'),
+			'timezone' => 'GMT' . (parent::format('Z') ? parent::format('P') : ''),
 			'pattern' => $pattern
 		))->format($this->getTimestamp());
 	}
