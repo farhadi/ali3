@@ -8,6 +8,8 @@
 
 namespace ali3\extensions\adapter\security\auth;
 
+use lithium\core\Libraries;
+
 /**
  * Database-enabled HTTP authentication adapter.
  * 
@@ -34,6 +36,16 @@ namespace ali3\extensions\adapter\security\auth;
 class Http extends \lithium\security\auth\adapter\Form {
 
 	/**
+	 * Dynamic class dependencies.
+	 *
+	 * @var array Associative array of class names & their namespaces.
+	 */
+	protected $_classes = array(
+		'auth' => 'lithium\net\http\Auth'
+	);
+
+
+	/**
 	 * Setup default configuration options.
 	 *
 	 * @param array $config
@@ -58,8 +70,13 @@ class Http extends \lithium\security\auth\adapter\Form {
 	 *          checks. See the `$_query` property for more details.
 	 */
 	public function __construct(array $config = array()) {
-		$defaults = array('method' => 'basic', 'realm' => basename(LITHIUM_APP_PATH));
-		parent::__construct($config + $defaults);
+		$realm = basename(Libraries::get(true, 'path'));
+        $defaults = $config + array(
+            'method' => 'basic', 
+            'realm' => $realm,
+            'users' => array(),
+        );
+		parent::__construct($defaults);
 	}
 
 	protected function _init() {
@@ -111,7 +128,7 @@ class Http extends \lithium\security\auth\adapter\Form {
 		}
 		if (!$user) {
 			$this->_writeHeader("WWW-Authenticate: Basic realm=\"{$this->_config['realm']}\"");
-			return false;
+			return;
 		}
 
 		return $user;
@@ -124,36 +141,28 @@ class Http extends \lithium\security\auth\adapter\Form {
 	 * @return void
 	 */
 	protected function _digest($request, $options) {
-		$realm = $this->_config['realm'];
-		$data = array(
-			'username' => null, 'nonce' => null, 'nc' => null,
-			'cnonce' => null, 'qop' => null, 'uri' => null,
-			'response' => null
-		);
-
-		$result = array_map(function ($string) use (&$data) {
-			$parts = explode('=', trim($string), 2) + array('', '');
-			$data[$parts[0]] = trim($parts[1], '"');
-		}, explode(',', $request->env('PHP_AUTH_DIGEST')));
-
+		$username = $password = null;
+		$auth = $this->_classes['auth'];
+		$data = $auth::decode($request->env('PHP_AUTH_DIGEST'));
+		$data['realm'] = $this->_config['realm'];
+		$data['method'] = $request->method;
 		$users = $this->_config['users'];
-		$password = !empty($users[$data['username']]) ? $users[$data['username']] : null;
 
-		$user = md5("{$data['username']}:{$realm}:{$password}");
-		$nonce = "{$data['nonce']}:{$data['nc']}:{$data['cnonce']}:{$data['qop']}";
-		$req = md5($request->env('REQUEST_METHOD') . ':' . $data['uri']);
-		$hash = md5("{$user}:{$nonce}:{$req}");
+		if (!empty($data['username']) && !empty($users[$data['username']])) {
+			$username = $data['username'];
+			$password = $users[$data['username']];
+		}
+		$encoded = $auth::encode($username, $password, $data);
 
-		if (!$data['username'] || $hash !== $data['response']) {
+		if ($encoded['response'] !== $data['response']) {
 			$nonce = uniqid();
-			$opaque = md5($realm);
-
-			$message = "WWW-Authenticate: Digest realm=\"{$realm}\",qop=\"auth\",";
+			$opaque = md5($data['realm']);
+			$message = "WWW-Authenticate: Digest realm=\"{$data['realm']}\",qop=\"auth\",";
 			$message .= "nonce=\"{$nonce}\",opaque=\"{$opaque}\"";
 			$this->_writeHeader($message);
-			return;
+			return false;
 		}
-		return array('username' => $data['username'], 'password' => $password);
+		return compact('username', 'password');
 	}
 
 	/**
