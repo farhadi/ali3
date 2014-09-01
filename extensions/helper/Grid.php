@@ -145,7 +145,7 @@ class Grid extends \lithium\template\Helper {
 						$options['onclick'] = "return confirm('$confirm');";
 						unset($options['confirm']);
 					}
-					$options += array('class' => $action);
+					$options += array('class' => $action, 'key' => 'id');					
 					if (isset($options['url'])) {
 						$url = $options['url']($row);
 						if (!$url) {
@@ -158,7 +158,7 @@ class Grid extends \lithium\template\Helper {
 					if ($url === true) {
 						$url = array(
 							'action' => $action,
-							'args' => array($row['id'])
+							'args' => array($row[$options['key']])
 						);
 					}
 					if (isset($titles[$action])) {
